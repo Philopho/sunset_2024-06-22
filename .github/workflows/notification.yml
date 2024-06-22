@@ -1,0 +1,23 @@
+name: "Telegram Notification"
+
+on:  
+  workflow_run:
+    workflows: [pages-build-deployment]
+    types:
+      - completed
+  workflow_dispatch:
+
+# Allow one concurrent deployment
+
+jobs:
+  telegram-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: send notification
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: | 
+            [Timelapse](https://Philopho.github.io/sunset_2024-06-22/timelapse.mp4) - [sunset_2024-06-22](https://Philopho.github.io/sunset_2024-06-22/)
