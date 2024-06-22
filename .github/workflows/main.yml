@@ -1,0 +1,52 @@
+name: "FFmpeg Timelapse"
+
+on:
+  push:
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  timelapse-page:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    name: Timelapse
+    steps:
+      - uses: actions/checkout@v3
+      - run: mkdir dist && cp index.html dist/index.html
+
+      - name: Render with FFmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v1
+        id: setup-ffmpeg
+      - run: ffmpeg -i frame-%03d.jpg -framerate 18 -c:v libx264 -crf 28 -vf scale=1296:-1 -an ./dist/timelapse.mp4
+
+      - name: Expose generated video as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Timelapse
+          path: ./dist/timelapse.mp4
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ./dist/timelapse.mp4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+
